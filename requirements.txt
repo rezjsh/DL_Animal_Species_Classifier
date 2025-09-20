@@ -1,0 +1,18 @@
+# Core ML and Deep Learning
+tensorflow>=2.9.0
+
+# Data utilities
+numpy>=1.19.5
+Pillow>=8.0.0
+
+# Visualization (optional, useful for analysis)
+matplotlib>=3.3.0
+
+# Progress bar (optional for nicer CLI)
+tqdm>=4.60.0
+
+# For system file handling and environment robustness
+scikit-learn>=0.24.0
+
+matplotlib
+-e .
