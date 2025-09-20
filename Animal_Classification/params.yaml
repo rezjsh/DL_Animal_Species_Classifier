@@ -1,0 +1,62 @@
+dataset_validation:
+  required_classes:
+    - cane
+    - gatto
+    - elefante
+    - cavallo
+    - pecora
+    - mucca
+    - gallina
+    - ragno
+    - farfalla
+    - scoiattolo
+  min_samples_per_class: 50
+  max_class_ratio: 10.0 # Max imbalance ratio (largest class / smallest class)
+  allowed_extensions:
+    - .jpg
+    - .jpeg
+    - .png
+    - .bmp
+  min_image_size: 100 # pixels minimum height/width
+
+dataset:
+  img_size: 224
+  batch_size: 8
+  shuffle_buffer_size: 1000
+  validation_split: 0.2
+
+augmentation:
+  horizontal_flip: true
+  vertical_flip: true
+  rotation_range: 40
+  width_shift_range: 0.2
+  height_shift_range: 0.2
+  zoom_range: 0.2
+  contrast_range: 0.2
+  brightness_factor: 0.2
+  num_images: 5
+
+model:
+  augmentation_enabled: true
+  model_choice: EfficientNetB0
+  img_size: 224
+  batch_size: 8
+  shuffle_buffer_size: 1000
+  validation_split: 0.2
+  learning_rate: 0.001
+  num_classes: 10
+  num_layers_to_unfreeze: 23
+
+callbacks:
+  patience: 5
+  min_delta: 0.001
+  lr_schedule: null
+  verbose: true
+
+model_training:
+  model_name: "trained_model.keras"
+  epochs: 20
+  batch_size: 8
+  learning_rate: 0.001
+  callbacks: []
+  verbose: 1

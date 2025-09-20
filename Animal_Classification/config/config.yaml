@@ -1,0 +1,34 @@
+data_ingestion:
+  kaggle_json_path: "kaggle.json"
+  extract_dir: "data/01_raw/animals10"
+  source_URL: "alessiocorrado99/animals10"
+  dest_dir: "data/01_raw"
+  zip_file_name: "animals10.zip"
+  unzip: true
+
+dataset_validation:
+  dataset_dir: data/01_raw/animals10/raw-img
+  report_dir: reports/validation_reports
+
+dataset:
+  data_dir: "data/01_raw/animals10/raw-img"
+
+augmentation:
+  save_path: "reports/augmentation/augmented_samples.png"
+
+callbacks:
+  checkpoint_dir: "models/checkpoints"
+
+model_training:
+  save_dir: "models"
+  save_plot_dir: "reports/training"
+
+evaluation:
+  save_dir: reports/evaluation
+  model_path: models
+  saved_model_name: best_model.keras
+
+model_prediction:
+  model_path: models/best_model.keras
+  class_names: ["cat", "dog", "wildlife"]
+  confidence_threshold: 0.5
