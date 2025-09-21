@@ -5,7 +5,6 @@ import tensorflow as tf
 from tqdm import tqdm
 from src.entity.config_entity import ModelPredictionConfig
 from src.utils.logging_setup import logger
-from src.utils.translate import translate
 
 translate = {"cane": "dog", "cavallo": "horse", "elefante": "elephant", "farfalla": "butterfly", "gallina": "chicken", "gatto": "cat", "mucca": "cow", "pecora": "sheep", "scoiattolo": "squirrel", "dog": "cane", "cavallo": "horse", "elephant" : "elefante", "butterfly": "farfalla", "chicken": "gallina", "cat": "gatto", "cow": "mucca", "spider": "ragno", "squirrel": "scoiattolo"}
 
@@ -53,19 +52,15 @@ class ModelPredictor:
             self.model = model
 
     def _translate_labels(self, labels):
-        # Check if translate is available and label_lang is not default
         if 'translate' in globals() and self.label_lang != "en":
             if self.label_lang == "it":
-                # Attempt to use a reverse translation mapping if available
                 rev_translate = {v: k for k, v in translate.items()}
                 return [rev_translate.get(label, label) for label in labels]
-            # Default to original labels if language or mapping not supported
-            return labels
-        # Return original labels if translate is not available or label_lang is default
+            # Add here more languages if supported
         return labels
 
 
-    def predict(self, inputs, return_labels: bool = False):
+    def predict(self, inputs, return_labels: bool = True):
         # tqdm only for iterables/datasets
         from tqdm import tqdm
         batches = tqdm(inputs, disable=not self.verbose) if hasattr(inputs, "__iter__") and self.verbose else [inputs]

@@ -13,11 +13,3 @@ class ModelEvaluationPipeline:
         metrics = evaluator.evaluate()
         logger.info(f"Model evaluation metrics: {metrics}")
         return metrics
-
-if __name__ == "__main__":
-    logger.info("Model Evaluation Pipeline")
-    config_manager = ConfigurationManager()
-    model_evaluation_config = config_manager.get_model_evaluation_config()
-    model_evaluation_pipeline = ModelEvaluationPipeline(config=model_evaluation_config)
-    model_evaluation_pipeline.run_pipeline(model=model, test_data=test_data, class_names=class_names)
-    logger.info("Model Evaluation Pipeline completed")

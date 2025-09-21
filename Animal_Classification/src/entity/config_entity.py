@@ -85,5 +85,5 @@ class ModelEvaluationConfig:
 @dataclass
 class ModelPredictionConfig:
     model_path: Path
-    class_names: List[str]
+    class_names: list[str]
     confidence_threshold: float

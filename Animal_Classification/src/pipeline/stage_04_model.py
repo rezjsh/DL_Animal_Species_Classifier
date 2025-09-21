@@ -19,4 +19,4 @@ class AnimalSpeciesClassifierModelPipeline:
         model = AnimalSpeciesClassifierModel(self.model_config, self.augmentation, num_classes).create_model()
         logger.info("Animal species classification model created.")
         return model
-        
+

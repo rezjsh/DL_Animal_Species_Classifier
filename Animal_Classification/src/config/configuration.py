@@ -117,7 +117,8 @@ class ConfigurationManager(metaclass=SingletonMeta):
                 patience=params.patience,
                 checkpoint_dir=config.checkpoint_dir,
                 min_delta=params.min_delta,
-                lr_schedule=params.lr_schedule,
+                # Safely get lr_schedule with a default of None
+                lr_schedule=params.get('lr_schedule', None),
                 verbose=params.verbose
             )
             logger.info(f"Custom callbacks config created: {custom_callbacks_config}")
