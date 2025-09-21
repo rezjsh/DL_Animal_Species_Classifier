@@ -85,3 +85,21 @@ def extract_zip(zip_path: str, extract_to: str) -> bool:
         except Exception as e:
             logger.error(f"Error extracting {zip_path}: {e}")
             return False
+
+
+def setup_gpu_memory_growth() -> None:
+    '''
+    Enable memory growth for GPU devices.
+    '''
+    logger.info("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+    gpus = tf.config.list_physical_devices('GPU')
+    if gpus:
+        try:
+            # Enable memory growth to prevent TensorFlow from allocating all GPU memory
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+            logger.info("Memory growth enabled for GPUs.")
+        except RuntimeError as e:
+            logger.error(f"Error setting memory growth: {e}")
+    else:
+        logger.warning("No GPU devices found.")
