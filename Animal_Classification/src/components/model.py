@@ -5,7 +5,20 @@ from src.modules.callbacks import CustomCallbacks
 from tensorflow.keras import layers, models
 import tensorflow as tf
 from src.utils.logging_setup import logger
+from tensorflow.keras.layers import Input, Rescaling, Conv2D, MaxPooling2D, Flatten, Dense, Dropout, GlobalAveragePooling2D
+from tensorflow.keras.models import Model
+from tensorflow.keras import Sequential
+from tensorflow.keras.applications.efficientnet import preprocess_input as efficientnet_preprocess
+from tensorflow.keras.applications.resnet_v2 import preprocess_input as resnet_preprocess
 
+
+class EfficientNetPreprocessLayer(Layer):
+    def call(self, inputs):
+        return efficientnet_preprocess(inputs)
+
+class ResNetPreprocessLayer(Layer):
+    def call(self, inputs):
+        return resnet_preprocess(inputs)
 
 class AnimalSpeciesClassifierModel:
     """
@@ -38,7 +51,7 @@ class AnimalSpeciesClassifierModel:
         logger.info("Model compilation complete.")
         return self.model
 
-    def _build_model(self) -> tf.keras.Model:
+    def _build_model(self) -> Model:
         """
         Builds the Keras model architecture based on the specified base model choice
         and configuration settings.
@@ -46,19 +59,35 @@ class AnimalSpeciesClassifierModel:
         Returns:
             tf.keras.Model: The constructed Keras model.
         """
-        inputs = layers.Input(shape=(self.config.img_size, self.config.img_size, 3), name="input_layer")
+        # Use tf.keras.Input and tf.keras.layers explicitly for compatibility
+        inputs = Input(shape=(self.config.img_size, self.config.img_size, 3), name="input_layer")
+        x = inputs
 
         # Apply augmentation if enabled
         if self.config.augmentation_enabled:
             logger.info("Augmentation enabled: Applying augmentation to inputs.")
             augmentation_layers = self.augmentation.build_augmentation_layers()
-            x = augmentation_layers(inputs)
+            x = augmentation_layers(x)
         else:
-            x = inputs
+          logger.info("Augmentation disabled: No augmentation applied to inputs.")
+
+
+        # Preprocessing for pretrained models
+        if self.config.model_choice == 'EfficientNetB0':
+            # x = layers.Lambda(efficientnet_preprocess, name="efficientnet_preprocess")(x)
+            x = EfficientNetPreprocessLayer(name="efficientnet_preprocess")(x)
+        elif self.config.model_choice == 'ResNet50V2':
+            # x = layers.Lambda(resnet_preprocess, name="resnet_preprocess")(x)
+            x = ResNetPreprocessLayer(name="resnet_preprocess")(x)
+
+
+        # No preprocess needed for CustomCNNModel as you already use Rescaling
 
         # Load base model from factory
         logger.info(f"Loading base model: {self.config.model_choice}")
-        base_model = ModelFactory.get_base_model(self.config.model_choice, self.config.img_size)
+        # Ensure ModelFactory returns a tf.keras.Model compatible with current TF version
+        base_model = ModelFactory.get_base_model(self.config.model_choice, self.config.img_size, include_top=False) # Do not include top layer
+
 
         # If using a pretrained model other than CustomCNN, freeze base layers
         if self.config.model_choice != 'CustomCNN':
@@ -67,29 +96,42 @@ class AnimalSpeciesClassifierModel:
             if self.config.num_layers_to_unfreeze > 0:
                 total_layers = len(base_model.layers)
                 logger.info(f"Total layers in base model: {total_layers}")
-                layers_to_unfreeze = base_model.layers[-self.config.num_layers_to_unfreeze:]
+                # Ensure layers are accessed correctly if base_model is a functional model or sequential
+                if isinstance(base_model, Sequential):
+                     layers_to_unfreeze = base_model.layers[-self.config.num_layers_to_unfreeze:]
+                elif hasattr(base_model, 'layers'): # For functional models
+                     # This might need more sophisticated logic depending on the model structure
+                     # For common application models, accessing layers directly often works
+                     layers_to_unfreeze = base_model.layers[-self.config.num_layers_to_unfreeze:]
+                else:
+                     logger.warning(f"Could not unfreeze layers for model type {type(base_model)}. Model remains fully frozen.")
+                     layers_to_unfreeze = [] # Empty list so loop below doesn't run
+
 
                 for layer in layers_to_unfreeze:
                     layer.trainable = True
-                logger.info(f"Unfroze the last {self.config.num_layers_to_unfreeze} layers for fine-tuning.")
+                logger.info(f"Unfroze the last {len(layers_to_unfreeze)} layers for fine-tuning.")
             else:
                 logger.info("No layers unfrozen; entire base model remains frozen.")
 
         # Forward pass through base model with training flag for CustomCNN
+        # Pass the tensor 'x' through the base model
+        # Use base_model.output if base_model is a functional model
         x = base_model(x, training=(self.config.model_choice == 'CustomCNN'))
+
 
         # Add pooling layer if not using CustomCNN to reduce spatial dimensions
         if self.config.model_choice != 'CustomCNN':
-            x = layers.GlobalAveragePooling2D(name="global_avg_pool")(x)
+            x = GlobalAveragePooling2D(name="global_avg_pool")(x)
 
         # Add dropout for regularization
-        x = layers.Dropout(0.2, name="dropout_layer")(x)
+        x = Dropout(0.2, name="dropout_layer")(x)
 
         # Final softmax classification layer
-        outputs = layers.Dense(self.num_classes, activation='softmax', name="output_layer")(x)
+        outputs = Dense(self.num_classes, activation='softmax', name="output_layer")(x)
 
         # Create Keras model instance
-        model = models.Model(inputs=inputs, outputs=outputs, name="AnimalSpeciesClassifier")
+        model = Model(inputs=inputs, outputs=outputs, name="AnimalSpeciesClassifier")
 
         logger.info("Model architecture summary:")
         model.summary(print_fn=logger.info)
