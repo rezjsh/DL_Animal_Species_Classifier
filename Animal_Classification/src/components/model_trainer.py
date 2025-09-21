@@ -30,14 +30,18 @@ class ModelTraining:
             History object with training metrics.
         """
         logger.info("Starting model training...")
-        self.history = self.model.fit(
-            train_data,
-            validation_data=val_data,
-            epochs=self.config.epochs,
-            batch_size=self.config.batch_size,
-            verbose=self.config.verbose,
-            callbacks=[callbacks],
-        )
+        if callbacks is None:
+          callbacks = []
+        fit_args = {
+        'epochs': self.config.epochs,
+        'validation_data': val_data,
+        'callbacks': callbacks,
+        'verbose': self.config.verbose,
+        }
+        if not (hasattr(train_data, 'cardinality') and train_data.cardinality() is not None):
+            fit_args['batch_size'] = self.config.batch_size
+
+        self.history = self.model.fit(train_data, **fit_args)
         logger.info("Model training complete.")
         return self.history
 
