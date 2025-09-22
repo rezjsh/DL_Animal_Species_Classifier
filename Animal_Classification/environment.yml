@@ -1,0 +1,19 @@
+name: animal-classifier
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.8
+  - pip
+  - pip:
+      - tensorflow>=2.10
+      - flask>=2.0
+      - numpy
+      - pandas
+      - matplotlib
+      - seaborn
+      - pyyaml
+      - boxsdk
+      - kaggle
+      - pytest
+      - gunicorn # for deployment within Docker
